@@ -51,12 +51,18 @@ class Circle {
     }
     vibrate(ratio) {
         // ratio がmsで　1000単位で来るので，これだとデカすぎないか？感がちょっとある
+        // 揺れ方がグロすぎたので，100 で割ました，これでちょうどいい感じ
+        // t-kihira は 10 かけてるんだけど，ms じゃなくて s 単位でとってこれるメソッドとかあるっけ？
+        // それとも，自前で修正してるだけだろうか？別にプレイヤーに秒数を表示するわけでもないので，必要ないと思うんだが
         const x = Math.random() * ratio / 100
         const y = Math.random() * ratio / 100
-        console.log(x, y);
+        //console.log(x, y);
         this.element.style.transform = `translate(${x}px, ${y}px)`
+        // 並行移動の translate をまた忘れていた，translate の () の中は関数と考えて，, を入れるようにしよう
+        // rgb もそうだっけか？？ , がいらないのは，css の border くらいか? (流石に他にもあるとは思う)
     }
 }
+
 // 次は，このノードをいっぱい出して，その中に数字をつけるところだね
 // 数字つけはできたんだけど，10になる数を全列挙して，そいつらを足していくのが，
 // 相当に大変です，まず panel というのを作って管理していくらしいので，その構造を把握しよう
@@ -86,6 +92,10 @@ class Panel {
     constructor() {
         console.log(tenCombinations.length);
         const element = document.createElement('div')
+        element.style.position = 'absolute'
+        element.style.top = '0'
+        element.style.left = '0'
+        element.style.transition = 'all 150ms ease-out'
         this.element = element
         // circle の x,y は指定してないはずだけど，panel かサークルかどっちで決めていくべきなのか
         // そもそも，circle の x,y は svg の x,y を指定するだけでいいのか
@@ -137,11 +147,13 @@ class Panel {
                     this.next()
                 } else {
                     const endTime = Date.now() + 1000
+                    element.style.pointerEvents = 'none'
                     while (Date.now() < endTime) {
                         const ratio = endTime - Date.now()
                         circles.forEach(circle => circle.vibrate(ratio))
                         await sleep(16)
                     }
+                    element.style.pointerEvents = 'auto'
                     circles.forEach(circle => circle.vibrate(0))
                     // 全部揺らせばいいのはわかるんだけど，foreach でカッコよく書くやり方がわからない
                 }
@@ -149,6 +161,8 @@ class Panel {
         }
     }
 }
+// 次は next メソッドの実装，なんだが，ゲロ重くて笑う
+// 流石になかなか実装重いね，t-kihira はあんだけ簡単そうに書いてるんだけど
 
 const init = () => {
     svgTemplate = document.getElementsByTagName('svg')[0]
@@ -166,11 +180,39 @@ const init = () => {
     document.body.append(container)
 }
 
-window.onload = () => {
+window.onload = async () => {
     init()
     // ここ，textContent には数字もそのまま入れてくれるらしくて便利だね
     //const circle = new Circle([1, 2, 3])
-    const panel = new Panel()
+    let panel = new Panel()
     container.append(panel.element)
     //container.append(circle.element)
+
+    // 連続正解チャレンジなんてものもあっても面白いかもしれない
+    for(let i = 0; i < 10; i++){
+        // これ前も出てきたけど，ピンときてない
+        // そもそも，panel の next 関数なんてものは実装してないんだよな
+        // でも ↓ を実装すると，正解を押した時にエラーは吐かなくなった，なるほど？？
+        await new Promise(resolve => {
+            panel.next = resolve
+        })
+        // これ別に transform である必要はないんだね，といまさら気づいた
+        panel.element.style.left = '-300px'
+        const newPanel = new Panel()
+        // ここで一瞬次のパネルが真ん中に表示されてしまわない？とちょっと思った
+        // ここで container に追加しないと（panelを）当たり前に表示されないので注意
+        container.append(newPanel.element)
+        newPanel.element.style.left = '300px'
+        await sleep(50)
+        newPanel.element.style.left = '0px'
+        await sleep(150)
+        
+        // この処理がそもそも大丈夫なのかは結構気になるけど
+        // panel としてフォーカスするものを変えてるだけって話なので，特に問題はないか
+        // なんか container の中身がぐちゃぐちゃになるんじゃないかとか一瞬思ったんだけど
+        panel = newPanel
+        //break
+        // いーですね，かなりいい感じにゲームが完成してきている
+        // あとはゲームクリアの処理くらいですかね
+    }
 }
