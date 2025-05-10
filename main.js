@@ -12,7 +12,7 @@ let message = null
 // まず角度を変える
 class Circle {
     constructor(combination) {
-        let angle = Math.random() * 0
+        let angle = Math.random() * 120
         const element = document.createElement('div')
         this.element = element
         // this をつけるとめんどくさいので，コンストラクタ内に限ってはつけなくてもいいか
@@ -179,6 +179,11 @@ const init = () => {
     container.style.height = `${height}px`
     container.style.border = 'solid 1px #000'
     container.style.overflow = 'hidden'
+    container.style.display = 'flex'
+    container.style.textAlign = 'center'
+    container.style.fontSize = '30px'
+    container.style.justifyContent = 'center'
+    container.style.alignItems = 'center'
     document.body.append(container)
 
     message = document.createElement('div')
@@ -189,6 +194,16 @@ const init = () => {
 let gameover = false
 window.onload = async () => {
     init()
+
+    for (let i = 3; i > 0; i--) {
+        // これは，改行を入れたかったから innerHTML にしたんだろうか
+        container.innerHTML = `Find10! </br> ${i}`
+        console.log(i);
+        await sleep(1000)
+    }
+    container.textContent = ''
+
+    let leftCount = 10
     // ここ，textContent には数字もそのまま入れてくれるらしくて便利だね
     //const circle = new Circle([1, 2, 3])
     let panel = new Panel()
@@ -199,14 +214,15 @@ window.onload = async () => {
     // なんでここで tick でぐるぐる回しても，下のメソッドに入れるのかがよくわからない
     // javascript は全部非同期でやってるとかいう話？その辺をきちんと理解しないとちょっと拡張がしづらくて辛いよね
     const startTime = Date.now()
+    let erapesedTime 
     const tick = () => {
         if (!gameover) {
             requestAnimationFrame(tick)
             // だってもう普通に考えてここでぐるぐる周りそうなもんだよな
         }
         // tofixed をまた忘れていた
-        const erapesedTime = (Date.now() - startTime) / 1000
-        message.textContent = `${erapesedTime.toFixed(3)}ms`
+        erapesedTime = (Date.now() - startTime) / 1000
+        message.textContent = `left: ${leftCount} / ${erapesedTime.toFixed(3)}sec`
     }
     tick()
 
@@ -219,6 +235,7 @@ window.onload = async () => {
             panel.next = resolve
         })
         // これ別に transform である必要はないんだね，といまさら気づいた
+        leftCount--;
 
         // こいつを外に出しておかないと，クリアしても，表示され続ける
         // 遷移中のタッチ阻止を忘れていた
@@ -226,7 +243,7 @@ window.onload = async () => {
         panel.element.style.pointerEvents = 'none'
 
         // なんかこの gameclear の判定の書き方キモくない？もっと単純にーーーとか思ったけど，アニメーション止めたりするのが面倒なのか
-        if (i !== 1) {
+        if (i !== 9) {
             const newPanel = new Panel()
             // ここで一瞬次のパネルが真ん中に表示されてしまわない？とちょっと思った
             // ここで container に追加しないと（panelを）当たり前に表示されないので注意
@@ -247,6 +264,8 @@ window.onload = async () => {
             // あとはゲームクリアの処理くらいですかね
         } else {
             gameover = true
+            await sleep(150)
+            container.innerHTML = `Clear! </br>${erapesedTime.toFixed(3)}sec`
         }
     }
 }
