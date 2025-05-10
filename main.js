@@ -55,10 +55,22 @@ class Circle {
 // 相当に大変です，まず panel というのを作って管理していくらしいので，その構造を把握しよう
 // まあ理解はできたけど，これを空からあんだけのスピードで実装できるのが異常すぎる
 
-const tenCombinations = [[1,2,3]]
+// まあ基本的に，こういうロジック部分の実装は，サラで書いても大丈夫な雰囲気があるので，サラで書いていこう
+// head の時点で読み込まれてるので大丈夫だと思われる，しかも何回も実行されたりみたいなことはないと思う
+const tenCombinations = []
+for (let a = 0; a < 10; a++) {
+    for (let b = 0; b < 10; b++) {
+        const c = 10 - a - b
+        if (0 <= c && c <= 10) {
+            tenCombinations.push([a, b, c])
+        }
+    }
+}
+// ちょっとゲームをやってみたんだが，普通にむずいな
 
 class Panel {
     constructor() {
+        console.log(tenCombinations.length);
         const element = document.createElement('div')
         this.element = element
         // circle の x,y は指定してないはずだけど，panel かサークルかどっちで決めていくべきなのか
@@ -73,6 +85,7 @@ class Panel {
             const x = i % 3
             const y = Math.trunc(i / 3)
             let combination = null
+            // ここの条件評価を = 一つにしていたので，無限ループが発生していたのでマジで残念
             if (i === solution) {
                 combination = tenCombinations[Math.trunc(Math.random() * tenCombinations.length)]
             } else {
