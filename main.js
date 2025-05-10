@@ -7,23 +7,34 @@ const height = 300
 let container = null
 let svgTemplate = null;
 
+// まず角度を変える
 class Circle{
     constructor(){
+        let angle = Math.random() * 180
         const element = document.createElement('div')
         this.element = element
-        this.element.style.position = 'absolute'
+        // this をつけるとめんどくさいので，コンストラクタ内に限ってはつけなくてもいいか
+        element.style.position = 'absolute'
         // cloneNode で true にしないと，タグの中身をもらえない
         // ただ，true にすると，id 被りなどが発生しうるから注意とのことだ
         const svg = svgTemplate.cloneNode(true)
+        // rotate させるのはあくまで svg の話らしい
+        // 0度じゃない時は deg をつけるのを忘れずに
+        // これを問題解いてる間にも少しずつ回転すれば面白いんじゃないかとかもちょっと思った
+        svg.style.transform = `rotate(${angle}deg)`
         console.log('create Circle');
-        this.element.append(svg)
-    }
+        element.append(svg)
 
+        const num = 
+    }
 }
+// 次は，このノードをいっぱい出して，その中に数字をつけるところだね
+
 const init = () => {
     svgTemplate = document.getElementsByTagName('svg')[0]
     // 親ノードと切り離すということをやってるらしい（謎）
     svgTemplate.remove()
+    // この block が謎すぎてウケる
     svgTemplate.style.display = "block"
 
     container = document.createElement('div')
