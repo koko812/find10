@@ -49,11 +49,22 @@ class Circle {
             angle += 120
         }
     }
+    vibrate(ratio) {
+        // ratio がmsで　1000単位で来るので，これだとデカすぎないか？感がちょっとある
+        const x = Math.random() * ratio / 100
+        const y = Math.random() * ratio / 100
+        console.log(x, y);
+        this.element.style.transform = `translate(${x}px, ${y}px)`
+    }
 }
 // 次は，このノードをいっぱい出して，その中に数字をつけるところだね
 // 数字つけはできたんだけど，10になる数を全列挙して，そいつらを足していくのが，
 // 相当に大変です，まず panel というのを作って管理していくらしいので，その構造を把握しよう
 // まあ理解はできたけど，これを空からあんだけのスピードで実装できるのが異常すぎる
+
+// この書き方をいい加減覚えていきたい，というかそんなにややこしいことはしてないと思うんだけど
+// async とか，await は実際に使うところで指定するので必要ないっぽい
+const sleep = (duration) => new Promise(r => setTimeout(r, duration))
 
 // まあ基本的に，こういうロジック部分の実装は，サラで書いても大丈夫な雰囲気があるので，サラで書いていこう
 // head の時点で読み込まれてるので大丈夫だと思われる，しかも何回も実行されたりみたいなことはないと思う
@@ -67,7 +78,10 @@ for (let a = 0; a < 10; a++) {
     }
 }
 // ちょっとゲームをやってみたんだが，普通にむずいな
+// あとはアニメーションをつけて行く感じですね，いい感じ
 
+// constructor を作って，それをさらに別の constructor に入れて行く感じが，オブジェクト指向っぽくて楽しいね
+const circles = []
 class Panel {
     constructor() {
         console.log(tenCombinations.length);
@@ -114,6 +128,24 @@ class Panel {
             // 最初 0,0 で定義したはずなので，circleSize /2 で引く必要はないんじゃね？と思ってる
             circle.element.style.top = `${circleSize * y}px`
             circle.element.style.left = `${circleSize * x}px`
+            circles.push(circle)
+            circle.element.onpointerdown = async (e) => {
+                // なぜこれでOKなのかが，いまさらわからなくなってきた
+                // i は circle のプロパティみたいな感じで登録する必要はないんだろうかという感じがする
+                console.log('down');
+                if (i === solution) {
+                    this.next()
+                } else {
+                    const endTime = Date.now() + 1000
+                    while (Date.now() < endTime) {
+                        const ratio = endTime - Date.now()
+                        circles.forEach(circle => circle.vibrate(ratio))
+                        await sleep(16)
+                    }
+                    circles.forEach(circle => circle.vibrate(0))
+                    // 全部揺らせばいいのはわかるんだけど，foreach でカッコよく書くやり方がわからない
+                }
+            }
         }
     }
 }
