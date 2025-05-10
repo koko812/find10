@@ -7,6 +7,7 @@ const circleSize = 100
 
 let container = null
 let svgTemplate = null;
+let message = null
 
 // まず角度を変える
 class Circle {
@@ -95,6 +96,7 @@ class Panel {
         element.style.position = 'absolute'
         element.style.top = '0'
         element.style.left = '0'
+        // all じゃない指定をする時はやってくるのだろうか
         element.style.transition = 'all 150ms ease-out'
         this.element = element
         // circle の x,y は指定してないはずだけど，panel かサークルかどっちで決めていくべきなのか
@@ -178,8 +180,13 @@ const init = () => {
     container.style.border = 'solid 1px #000'
     container.style.overflow = 'hidden'
     document.body.append(container)
+
+    message = document.createElement('div')
+    // これは container じゃなくて body に追加する（あたりまえ）
+    document.body.append(message)
 }
 
+let gameover = false
 window.onload = async () => {
     init()
     // ここ，textContent には数字もそのまま入れてくれるらしくて便利だね
@@ -188,8 +195,23 @@ window.onload = async () => {
     container.append(panel.element)
     //container.append(circle.element)
 
+    // 時間計測メソッドを追加していく
+    // なんでここで tick でぐるぐる回しても，下のメソッドに入れるのかがよくわからない
+    // javascript は全部非同期でやってるとかいう話？その辺をきちんと理解しないとちょっと拡張がしづらくて辛いよね
+    const startTime = Date.now()
+    const tick = () => {
+        if (!gameover) {
+            requestAnimationFrame(tick)
+            // だってもう普通に考えてここでぐるぐる周りそうなもんだよな
+        }
+        // tofixed をまた忘れていた
+        const erapesedTime = (Date.now() - startTime) / 1000
+        message.textContent = `${erapesedTime.toFixed(3)}ms`
+    }
+    tick()
+
     // 連続正解チャレンジなんてものもあっても面白いかもしれない
-    for(let i = 0; i < 10; i++){
+    for (let i = 0; i < 10; i++) {
         // これ前も出てきたけど，ピンときてない
         // そもそも，panel の next 関数なんてものは実装してないんだよな
         // でも ↓ を実装すると，正解を押した時にエラーは吐かなくなった，なるほど？？
@@ -197,22 +219,34 @@ window.onload = async () => {
             panel.next = resolve
         })
         // これ別に transform である必要はないんだね，といまさら気づいた
+
+        // こいつを外に出しておかないと，クリアしても，表示され続ける
+        // 遷移中のタッチ阻止を忘れていた
         panel.element.style.left = '-300px'
-        const newPanel = new Panel()
-        // ここで一瞬次のパネルが真ん中に表示されてしまわない？とちょっと思った
-        // ここで container に追加しないと（panelを）当たり前に表示されないので注意
-        container.append(newPanel.element)
-        newPanel.element.style.left = '300px'
-        await sleep(50)
-        newPanel.element.style.left = '0px'
-        await sleep(150)
-        
-        // この処理がそもそも大丈夫なのかは結構気になるけど
-        // panel としてフォーカスするものを変えてるだけって話なので，特に問題はないか
-        // なんか container の中身がぐちゃぐちゃになるんじゃないかとか一瞬思ったんだけど
-        panel = newPanel
-        //break
-        // いーですね，かなりいい感じにゲームが完成してきている
-        // あとはゲームクリアの処理くらいですかね
+        panel.element.style.pointerEvents = 'none'
+
+        // なんかこの gameclear の判定の書き方キモくない？もっと単純にーーーとか思ったけど，アニメーション止めたりするのが面倒なのか
+        if (i !== 1) {
+            const newPanel = new Panel()
+            // ここで一瞬次のパネルが真ん中に表示されてしまわない？とちょっと思った
+            // ここで container に追加しないと（panelを）当たり前に表示されないので注意
+            container.append(newPanel.element)
+            newPanel.element.style.left = '300px'
+            // ここの sleep の秒数に自分的に根拠がなくて困っている
+            await sleep(50)
+            panel.element.style.pointerEvents = 'auto'
+            newPanel.element.style.left = '0px'
+            await sleep(150)
+
+            // この処理がそもそも大丈夫なのかは結構気になるけど
+            // panel としてフォーカスするものを変えてるだけって話なので，特に問題はないか
+            // なんか container の中身がぐちゃぐちゃになるんじゃないかとか一瞬思ったんだけど
+            panel = newPanel
+            //break
+            // いーですね，かなりいい感じにゲームが完成してきている
+            // あとはゲームクリアの処理くらいですかね
+        } else {
+            gameover = true
+        }
     }
 }
